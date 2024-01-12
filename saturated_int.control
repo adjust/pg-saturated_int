@@ -1,0 +1,5 @@
+comment = 'an integer type with saturation arithmetic'
+default_version = '0.0.1'
+relocatable = true
+module_pathname = '$libdir/saturated_int'
+
