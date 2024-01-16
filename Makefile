@@ -1,7 +1,7 @@
 EXTENSION = saturated_int
 MODULE_big = saturated_int
 
-PG_CONFIG ?= PG_CONFIG
+PG_CONFIG ?= pg_config
 
 DATA = $(wildcard *--*.sql)
 OBJS = $(patsubst %.c,%.o,$(wildcard src/*.c))
