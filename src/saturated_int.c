@@ -4,6 +4,9 @@
 #include <limits.h>
 
 #include "utils/builtins.h"
+#if PG_VERSION_NUM < 150000
+#include "utils/int8.h"
+#endif
 
 PG_MODULE_MAGIC;
 
@@ -36,7 +39,13 @@ sat_int4_in(PG_FUNCTION_ARGS)
 {
 	char	   *arg = PG_GETARG_CSTRING(0);
 
+#if PG_VERSION_NUM < 150000
+	int64		result;
+	(void) scanint8(arg, false, &result);
+	PG_RETURN_INT32(sat_int8to4_impl(result));
+#else
 	PG_RETURN_INT32(sat_int8to4_impl(pg_strtoint64(arg)));
+#endif
 }
 
 /*
