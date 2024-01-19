@@ -45,42 +45,42 @@ WITHOUT FUNCTION AS ASSIGNMENT;
 -- Define comparison operators
 
 CREATE FUNCTION saturated_int_eq(saturated_int, saturated_int)
-RETURN boolean
+RETURNS boolean
 AS 'int4eq'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION saturated_int_ne(saturated_int, saturated_int)
-RETURN boolean
+RETURNS boolean
 AS 'int4ne'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION saturated_int_lt(saturated_int, saturated_int)
-RETURN boolean
+RETURNS boolean
 AS 'int4lt'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION saturated_int_le(saturated_int, saturated_int)
-RETURN boolean
+RETURNS boolean
 AS 'int4le'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION saturated_int_gt(saturated_int, saturated_int)
-RETURN boolean
+RETURNS boolean
 AS 'int4gt'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION saturated_int_ge(saturated_int, saturated_int)
-RETURN boolean
+RETURNS boolean
 AS 'int4ge'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION saturated_int_cmp(saturated_int, saturated_int)
-RETURN integer
+RETURNS integer
 AS 'btint4cmp'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE FUNCTION hash_saturated_int(saturated_int)
-RETURN integer
+RETURNS integer
 AS 'hashint4'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
@@ -91,7 +91,8 @@ CREATE OPERATOR = (
     commutator = '=',
     negator = '<>',
     restrict = eqsel,
-    join = eqjoinsel
+    join = eqjoinsel,
+    hashes, merges
 );
 COMMENT ON OPERATOR =(saturated_int, saturated_int) IS 'equals';
 
@@ -117,16 +118,84 @@ CREATE OPERATOR < (
 );
 COMMENT ON OPERATOR <(saturated_int, saturated_int) IS 'less than';
 
-CREATE OPERATOR <= (
+CREATE OPERATOR > (
     leftarg = saturated_int,
     rightarg = saturated_int,
-    procedure = saturated_int_le,
-    commutator = '>=',
-    negator = '>',
-    restrict = scalarlesel,
-    join = scalarlejoinsel
+    procedure = saturated_int_gt,
+    commutator = '<',
+    negator = '<=',
+    restrict = scalargtsel,
+    join = scalargtjoinsel
 );
-COMMENT ON OPERATOR <(saturated_int, saturated_int) IS 'less than or equal';
+COMMENT ON OPERATOR >(saturated_int, saturated_int) IS 'greater than';
+
+DO $$
+BEGIN
+    IF current_setting('server_version_num')::int >= 110000 THEN
+        CREATE OPERATOR <= (
+            leftarg = saturated_int,
+            rightarg = saturated_int,
+            procedure = saturated_int_le,
+            commutator = '>=',
+            negator = '>',
+            restrict = scalarlesel,
+            join = scalarlejoinsel
+        );
+
+        CREATE OPERATOR >= (
+            leftarg = saturated_int,
+            rightarg = saturated_int,
+            procedure = saturated_int_ge,
+            commutator = '<=',
+            negator = '<',
+            restrict = scalargesel,
+            join = scalargejoinsel
+        );
+    ELSE
+        CREATE OPERATOR <= (
+            leftarg = saturated_int,
+            rightarg = saturated_int,
+            procedure = saturated_int_le,
+            commutator = '>=',
+            negator = '>',
+            restrict = scalarltsel,
+            join = scalarltjoinsel
+        );
+
+        CREATE OPERATOR >= (
+            leftarg = saturated_int,
+            rightarg = saturated_int,
+            procedure = saturated_int_ge,
+            commutator = '<=',
+            negator = '<',
+            restrict = scalargtsel,
+            join = scalargtjoinsel
+        );
+    END IF;
+END;
+$$;
+COMMENT ON OPERATOR >=(saturated_int, saturated_int) IS 'greater than or equal';
+COMMENT ON OPERATOR <=(saturated_int, saturated_int) IS 'less than or equal';
+
+CREATE OPERATOR CLASS btree_saturated_int_ops
+DEFAULT FOR TYPE saturated_int USING btree
+AS
+    OPERATOR    1   <,
+    OPERATOR    2   <=,
+    OPERATOR    3   =,
+    OPERATOR    4   >=,
+    OPERATOR    5   >,
+    FUNCTION    1   saturated_int_cmp(saturated_int, saturated_int);
+
+CREATE OPERATOR CLASS hash_saturated_int_ops
+DEFAULT FOR TYPE saturated_int USING hash
+AS
+    OPERATOR    1   =,
+    FUNCTION    1   hash_saturated_int(saturated_int);
+
+-- Define arithmetic operators
+
+
 
 -- Define aggregate functions
 
