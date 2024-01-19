@@ -1,3 +1,7 @@
+-- Show less information in error messages due to different output of different
+-- PostgreSQL versions
+\set VERBOSITY terse
+
 create extension saturated_int;
 
 -- Test cast to saturated_int
