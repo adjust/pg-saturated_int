@@ -1,5 +1,4 @@
 SET max_parallel_workers_per_gather=4;
-SET force_parallel_mode=on;
 SET parallel_setup_cost = 10;
 SET parallel_tuple_cost = 0.001;
 
