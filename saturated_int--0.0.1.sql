@@ -8,11 +8,21 @@ RETURNS cstring
 AS 'int4out'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sat_int4_recv(internal)
+RETURNS saturated_int
+AS 'int4recv'
+LANGUAGE internal IMMUTABLE PARALLEL SAFE;
+
+CREATE FUNCTION sat_int4_send(saturated_int)
+RETURNS bytea
+AS 'int4send'
+LANGUAGE internal IMMUTABLE PARALLEL SAFE;
+
 CREATE TYPE saturated_int (
     input = sat_int4_in,
     output = sat_int4_out,
-    -- receive = ...,
-    -- send = ...,
+    receive = sat_int4_recv,
+    send = sat_int4_send,
     like = integer,
     category = 'N'
 );
