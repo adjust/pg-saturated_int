@@ -248,7 +248,17 @@ CREATE OPERATOR + (
 );
 COMMENT ON OPERATOR +(saturated_int, saturated_int) IS 'add';
 
+CREATE FUNCTION saturated_int_mi(saturated_int, saturated_int)
+RETURNS saturated_int
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OPERATOR - (
+    leftarg = saturated_int,
+    rightarg = saturated_int,
+    procedure = saturated_int_mi
+);
+COMMENT ON OPERATOR -(saturated_int, saturated_int) IS 'subtract';
 
 -- Define aggregate functions
 

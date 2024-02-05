@@ -19,6 +19,7 @@ PG_FUNCTION_INFO_V1(saturated_int_sum);
 PG_FUNCTION_INFO_V1(saturated_int_mul);
 PG_FUNCTION_INFO_V1(saturated_int_div);
 PG_FUNCTION_INFO_V1(saturated_int_pl);
+PG_FUNCTION_INFO_V1(saturated_int_mi);
 
 /*
  * Cast bigint to integer with saturation.
@@ -112,7 +113,7 @@ saturated_int_mul(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		arg2 = PG_GETARG_INT32(1);
 
-	PG_RETURN_INT32(saturated_int8to4_impl(arg1 * arg2));
+	PG_RETURN_INT32(saturated_int8to4_impl((int64) arg1 * (int64) arg2));
 }
 
 /*
@@ -158,5 +159,14 @@ saturated_int_pl(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		arg2 = PG_GETARG_INT32(1);
 
-	PG_RETURN_INT32(saturated_int8to4_impl(arg1 + arg2));
+	PG_RETURN_INT32(saturated_int8to4_impl((int64) arg1 + (int64) arg2));
+}
+
+Datum
+saturated_int_mi(PG_FUNCTION_ARGS)
+{
+	int32		arg1 = PG_GETARG_INT32(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+
+	PG_RETURN_INT32(saturated_int8to4_impl((int64) arg1 - (int64) arg2));
 }
