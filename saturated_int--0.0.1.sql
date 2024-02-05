@@ -1,45 +1,48 @@
 -- Define saturated_int
 
-CREATE FUNCTION sat_int4_in(cstring)
+CREATE FUNCTION saturated_int_in(cstring)
 RETURNS saturated_int
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sat_int4_out(saturated_int)
+CREATE FUNCTION saturated_int_out(saturated_int)
 RETURNS cstring
 AS 'int4out'
 LANGUAGE internal IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE FUNCTION sat_int4_recv(internal)
+CREATE FUNCTION saturated_int_recv(internal)
 RETURNS saturated_int
 AS 'int4recv'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
-CREATE FUNCTION sat_int4_send(saturated_int)
+CREATE FUNCTION saturated_int_send(saturated_int)
 RETURNS bytea
 AS 'int4send'
 LANGUAGE internal IMMUTABLE PARALLEL SAFE;
 
 CREATE TYPE saturated_int (
-    input = sat_int4_in,
-    output = sat_int4_out,
-    receive = sat_int4_recv,
-    send = sat_int4_send,
+    input = saturated_int_in,
+    output = saturated_int_out,
+    receive = saturated_int_recv,
+    send = saturated_int_send,
     like = integer,
     category = 'N'
 );
 
 -- Define casts into saturated_int
 
-CREATE FUNCTION sat_int8to4(bigint)
+CREATE FUNCTION saturated_int8to4(bigint)
 RETURNS saturated_int
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (bigint AS saturated_int)
-WITH FUNCTION sat_int8to4(bigint) AS ASSIGNMENT;
+WITH FUNCTION saturated_int8to4(bigint) AS ASSIGNMENT;
 
 CREATE CAST (integer AS saturated_int)
+WITHOUT FUNCTION AS ASSIGNMENT;
+
+CREATE CAST (saturated_int as integer)
 WITHOUT FUNCTION AS ASSIGNMENT;
 
 -- Define comparison operators
@@ -195,17 +198,67 @@ AS
 
 -- Define arithmetic operators
 
+CREATE FUNCTION saturated_int_mul(saturated_int, saturated_int)
+RETURNS saturated_int
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR * (
+    leftarg = saturated_int,
+    rightarg = saturated_int,
+    procedure = saturated_int_mul,
+    commutator = '*'
+);
+COMMENT ON OPERATOR *(saturated_int, saturated_int) IS 'multiply';
+
+CREATE FUNCTION saturated_int_div(saturated_int, saturated_int)
+RETURNS saturated_int
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR / (
+    leftarg = saturated_int,
+    rightarg = saturated_int,
+    procedure = saturated_int_div
+);
+COMMENT ON OPERATOR /(saturated_int, saturated_int) IS 'divide';
+
+CREATE FUNCTION saturated_int_mod(saturated_int, saturated_int)
+RETURNS saturated_int
+AS 'int4mod'
+LANGUAGE internal IMMUTABLE PARALLEL SAFE;
+
+CREATE OPERATOR % (
+    leftarg = saturated_int,
+    rightarg = saturated_int,
+    procedure = saturated_int_mod
+);
+COMMENT ON OPERATOR %(saturated_int, saturated_int) IS 'modulus';
+
+CREATE FUNCTION saturated_int_pl(saturated_int, saturated_int)
+RETURNS saturated_int
+AS 'MODULE_PATHNAME'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR + (
+    leftarg = saturated_int,
+    rightarg = saturated_int,
+    procedure = saturated_int_pl,
+    commutator = '+'
+);
+COMMENT ON OPERATOR +(saturated_int, saturated_int) IS 'add';
+
 
 
 -- Define aggregate functions
 
-CREATE FUNCTION sat_int4_sum(state saturated_int, val saturated_int)
+CREATE FUNCTION saturated_int_sum(state saturated_int, val saturated_int)
 RETURNS saturated_int
 AS 'MODULE_PATHNAME'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE AGGREGATE sum(saturated_int) (
-    sfunc = sat_int4_sum,
+    sfunc = saturated_int_sum,
     stype = saturated_int,
     -- combinefunc = ...,
     -- msfunc = ...,
