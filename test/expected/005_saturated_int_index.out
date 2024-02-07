@@ -1,0 +1,43 @@
+SET enable_seqscan to off;
+CREATE TABLE btree_test(id saturated_int);
+INSERT INTO btree_test
+SELECT i  FROM generate_series(1::int, 1e4::int) g(i);
+CREATE INDEX btree_test_idx ON btree_test (id);
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT id FROM btree_test WHERE id = 5000::saturated_int;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Bitmap Heap Scan on public.btree_test
+   Output: id
+   Recheck Cond: (btree_test.id = '5000'::saturated_int)
+   ->  Bitmap Index Scan on btree_test_idx
+         Index Cond: (btree_test.id = '5000'::saturated_int)
+(5 rows)
+
+SELECT id FROM btree_test WHERE id = 5000::saturated_int;
+  id  
+------
+ 5000
+(1 row)
+
+CREATE TABLE hash_test(id saturated_int);
+INSERT INTO hash_test
+SELECT i  FROM generate_series(1::int, 1e4::int) g(i);
+CREATE INDEX hash_test_idx ON hash_test (id);
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT id FROM hash_test WHERE id = 5000::saturated_int;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Bitmap Heap Scan on public.hash_test
+   Output: id
+   Recheck Cond: (hash_test.id = '5000'::saturated_int)
+   ->  Bitmap Index Scan on hash_test_idx
+         Index Cond: (hash_test.id = '5000'::saturated_int)
+(5 rows)
+
+SELECT id FROM hash_test WHERE id = 5000::saturated_int;
+  id  
+------
+ 5000
+(1 row)
+
