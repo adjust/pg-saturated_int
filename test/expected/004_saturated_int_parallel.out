@@ -1,0 +1,61 @@
+SET max_parallel_workers_per_gather=4;
+SET parallel_setup_cost = 10;
+SET parallel_tuple_cost = 0.001;
+CREATE TABLE parallel_test(id1 saturated_int, id2 int) WITH (parallel_workers = 4);
+INSERT INTO parallel_test
+SELECT i, i FROM generate_series(1::int, 1e4::int) g(i);
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT count(*) FROM parallel_test WHERE id1 = 5000::saturated_int;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Finalize Aggregate
+   Output: count(*)
+   ->  Gather
+         Output: (PARTIAL count(*))
+         Workers Planned: 4
+         ->  Partial Aggregate
+               Output: PARTIAL count(*)
+               ->  Parallel Seq Scan on public.parallel_test
+                     Output: id1, id2
+                     Filter: (parallel_test.id1 = '5000'::saturated_int)
+(10 rows)
+
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT id1, count(*) FROM parallel_test GROUP BY 1;
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Finalize HashAggregate
+   Output: id1, count(*)
+   Group Key: parallel_test.id1
+   ->  Gather
+         Output: id1, (PARTIAL count(*))
+         Workers Planned: 4
+         ->  Partial HashAggregate
+               Output: id1, PARTIAL count(*)
+               Group Key: parallel_test.id1
+               ->  Parallel Seq Scan on public.parallel_test
+                     Output: id1, id2
+(11 rows)
+
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT sum(id1) FROM parallel_test WHERE id1 < 5000::saturated_int;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Finalize Aggregate
+   Output: sum(id1)
+   ->  Gather
+         Output: (PARTIAL sum(id1))
+         Workers Planned: 4
+         ->  Partial Aggregate
+               Output: PARTIAL sum(id1)
+               ->  Parallel Seq Scan on public.parallel_test
+                     Output: id1, id2
+                     Filter: (parallel_test.id1 < '5000'::saturated_int)
+(10 rows)
+
+SELECT sum(id1), sum(id2) FROM parallel_test WHERE id1 < 5000::saturated_int;
+   sum    |   sum    
+----------+----------
+ 12497500 | 12497500
+(1 row)
+
