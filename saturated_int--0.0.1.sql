@@ -271,10 +271,5 @@ CREATE AGGREGATE sum(saturated_int) (
     sfunc = saturated_int_sum,
     stype = saturated_int,
     combinefunc = saturated_int_pl,
-    -- msfunc = ...,
-    -- minvfunc = ...,
-    -- mfinalfunc = ...,
-    -- mstype = ...,
-    -- minitcond = '{0, 0}',
     parallel = SAFE
 );
