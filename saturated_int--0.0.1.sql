@@ -270,7 +270,7 @@ LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE AGGREGATE sum(saturated_int) (
     sfunc = saturated_int_sum,
     stype = saturated_int,
-    -- combinefunc = ...,
+    combinefunc = saturated_int_pl,
     -- msfunc = ...,
     -- minvfunc = ...,
     -- mfinalfunc = ...,

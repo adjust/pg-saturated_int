@@ -37,3 +37,25 @@ SELECT id1, count(*) FROM parallel_test GROUP BY 1;
                      Output: id1, id2
 (11 rows)
 
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT sum(id1) FROM parallel_test WHERE id1 < 5000::saturated_int;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Finalize Aggregate
+   Output: sum(id1)
+   ->  Gather
+         Output: (PARTIAL sum(id1))
+         Workers Planned: 4
+         ->  Partial Aggregate
+               Output: PARTIAL sum(id1)
+               ->  Parallel Seq Scan on public.parallel_test
+                     Output: id1, id2
+                     Filter: (parallel_test.id1 < '5000'::saturated_int)
+(10 rows)
+
+SELECT sum(id1), sum(id2) FROM parallel_test WHERE id1 < 5000::saturated_int;
+   sum    |   sum    
+----------+----------
+ 12497500 | 12497500
+(1 row)
+

@@ -11,3 +11,8 @@ SELECT count(*) FROM parallel_test WHERE id1 = 5000::saturated_int;
 
 EXPLAIN (COSTS OFF, VERBOSE)
 SELECT id1, count(*) FROM parallel_test GROUP BY 1;
+
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT sum(id1) FROM parallel_test WHERE id1 < 5000::saturated_int;
+
+SELECT sum(id1), sum(id2) FROM parallel_test WHERE id1 < 5000::saturated_int;
