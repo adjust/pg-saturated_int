@@ -1,3 +1,5 @@
+![CI](https://github.com/adjust/pg-saturated_int/workflows/CI/badge.svg)
+
 # pg-saturated_int
 
 An integer type with [saturation arithmetic](https://en.wikipedia.org/wiki/Saturation_arithmetic).
